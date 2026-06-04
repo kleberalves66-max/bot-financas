@@ -92,6 +92,9 @@ def webhook():
     
     return str(resposta_twilio)
 
-if __name__ == "__main__":
-    print("\n🚀 Iniciando o servidor do Bot...")
-    app.run(port=5000, debug=True)
+import os
+
+if __name__ == '__main__':
+    # O Render define a porta automaticamente na variável PORT
+    porta = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=porta, debug=True)
