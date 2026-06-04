@@ -30,13 +30,11 @@ def webhook():
             response = model.generate_content(prompt)
             
             # Limpeza do texto da IA para garantir que seja um JSON válido
-            # Correção da linha 33 que causou o SyntaxError
-            json_text = response.text.replace('```json', '').replace('
-```', '').strip()
+            json_text = response.text.replace('```json', '').replace('```', '').strip()
             dados = eval(json_text)
             
-            # SALVANDO NA TABELA CORRETA: finanças_nuvem
-            res = supabase.table("finanças_nuvem").insert(dados).execute()
+            # AJUSTADO: Nome da tabela limpo, sem acentos para rodar na nuvem
+            res = supabase.table("financas_nuvem").insert(dados).execute()
             
             resp.message(f"✅ Salvo com sucesso no banco!\n💰 Valor: R$ {dados['valor']}\n📂 Categoria: {dados['categoria']}")
         
@@ -47,6 +45,5 @@ def webhook():
     return str(resp)
 
 if __name__ == "__main__":
-    # O Render exige que a porta seja dinâmica
     porta = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=porta)
