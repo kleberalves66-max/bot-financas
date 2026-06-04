@@ -1,4 +1,4 @@
 flask
 twilio
 supabase
-google-genai
+google-generativeai
