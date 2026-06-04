@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from supabase import create_client
@@ -25,22 +26,35 @@ def webhook():
         comando = msg.replace('!bot', '').strip()
         
         try:
-            # IA processando a frase
-            prompt = f"Extraia os dados desta transação financeira: '{comando}'. Retorne APENAS um JSON com: tipo (entrada/saida), valor (numero), categoria e descricao."
+            # Forçamos a IA a responder estritamente em formato JSON puro
+            prompt = (
+                f"Extraia os dados desta transação financeira: '{comando}'. "
+                "Retorne APENAS um objeto JSON válido, sem formatação Markdown, sem aspas triplas (```json). "
+                "Use exatamente estas chaves: "
+                '{"tipo": "entrada" ou "saida", "valor": numero, "categoria": "texto", "descricao": "texto"}'
+            )
+            
             response = model.generate_content(prompt)
+            texto_ia = response.text.strip()
             
-            # Limpeza do texto da IA para garantir que seja um JSON válido
-            json_text = response.text.replace('```json', '').replace('```', '').strip()
-            dados = eval(json_text)
+            # Limpeza preventiva caso a IA ainda coloque blocos de código
+            if texto_ia.startswith("```"):
+                texto_ia = texto_ia.replace("```json", "").replace("```", "").strip()
             
-            # AJUSTADO: Nome da tabela limpo, sem acentos para rodar na nuvem
+            # Convertendo o texto em um dicionário Python de forma segura
+            dados = json.loads(texto_ia)
+            
+            # Forçar o valor a ser um número real (float) para o Supabase aceitar na coluna numeric
+            dados['valor'] = float(dados['valor'])
+            
+            # SALVANDO NA TABELA: financas_nuvem (Garanta que no Supabase o nome está sem acentos)
             res = supabase.table("financas_nuvem").insert(dados).execute()
             
             resp.message(f"✅ Salvo com sucesso no banco!\n💰 Valor: R$ {dados['valor']}\n📂 Categoria: {dados['categoria']}")
         
         except Exception as e:
-            print(f"Erro detalhado: {e}")
-            resp.message("❌ Ocorreu um erro ao processar ou salvar no banco de dados.")
+            print(f"Erro detalhado no servidor: {e}")
+            resp.message(f"❌ Erro ao salvar: {str(e)[:50]}") # Agora o bot vai te dizer no WhatsApp o começo do erro real!
     
     return str(resp)
 
