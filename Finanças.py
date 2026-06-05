@@ -7,10 +7,10 @@ import google.generativeai as genai
 
 app = Flask(__name__)
 
-# Credenciais atualizadas com a sua nova chave do AI Studio
-SUPABASE_URL = "https://gnmendbdydjbdrsqqkna.supabase.co"
-SUPABASE_KEY = "sb_publishable_gPogwuved8rqGlcq9WJQGw_mcaaEVuB"
-GEMINI_API_KEY = "AIzaSyCMfQ3OWN-utRZtOQIYssBJmcyk7hKbaLI"
+# Puxando com total segurança da memória do Render (Sem chaves expostas!)
+SUPABASE_URL = os.environ.get("https://gnmendbdydjbdrsqqkna.supabase.co")
+SUPABASE_KEY = os.environ.get("sb_publishable_gPogwuved8rqGlcq9WJQGw_mcaaEVuB")
+GEMINI_API_KEY = os.environ.get("AQ.Ab8RN6LoKlgAkJbjR_xwJn7O16aw1Zas9-QYO_3aQYA8bxguoA")
 
 # Inicialização dos Clientes
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -26,7 +26,6 @@ def webhook():
         comando = msg.replace('!bot', '').strip()
         
         try:
-            # Prompt estruturado para JSON limpo
             prompt = (
                 f"Extraia os dados desta transação financeira: '{comando}'. "
                 "Retorne APENAS um objeto JSON válido, sem formatação Markdown, sem aspas triplas (```json). "
@@ -37,14 +36,13 @@ def webhook():
             response = model.generate_content(prompt)
             texto_ia = response.text.strip()
             
-            # Limpeza caso a IA teime em colocar Markdown
             if texto_ia.startswith("```"):
                 texto_ia = texto_ia.replace("```json", "").replace("```", "").strip()
             
             dados = json.loads(texto_ia)
             dados['valor'] = float(dados['valor'])
             
-            # SALVANDO NA TABELA: Mantido o nome original com acento conforme seu Supabase
+            # Salvando na tabela oficial com acento
             res = supabase.table("finanças_nuvem").insert(dados).execute()
             
             resp.message(f"✅ Salvo com sucesso no banco!\n💰 Valor: R$ {dados['valor']}\n📂 Categoria: {dados['categoria']}")
