@@ -7,15 +7,20 @@ import google.generativeai as genai
 
 app = Flask(__name__)
 
-# Puxando com total segurança da memória do Render (Sem chaves expostas!)
-SUPABASE_URL = os.environ.get("https://gnmendbdydjbdrsqqkna.supabase.co")
-SUPABASE_KEY = os.environ.get("sb_publishable_gPogwuved8rqGlcq9WJQGw_mcaaEVuB")
-GEMINI_API_KEY = os.environ.get("AQ.Ab8RN6LoKlgAkJbjR_xwJn7O16aw1Zas9-QYO_3aQYA8bxguoA")
+# Puxando dos Environments ou usando um texto vazio para não quebrar o Python no início
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://gnmendbdydjbdrsqqkna.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
-# Inicialização dos Clientes
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Só tenta inicializar se a chave existir, evitando o "status 1"
+if GEMINI_API_KEY and SUPABASE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    print("AVISO: Chaves não encontradas nas Variáveis de Ambiente do Render!")
+    supabase = None
+    model = None
 
 @app.route("/webhook", methods=['POST'])
 def webhook():
@@ -25,6 +30,10 @@ def webhook():
     if msg.startswith('!bot'):
         comando = msg.replace('!bot', '').strip()
         
+        if not model or not supabase:
+            resp.message("❌ Erro: O servidor iniciou, mas as chaves de API não estão configuradas no Render.")
+            return str(resp)
+            
         try:
             prompt = (
                 f"Extraia os dados desta transação financeira: '{comando}'. "
@@ -42,7 +51,6 @@ def webhook():
             dados = json.loads(texto_ia)
             dados['valor'] = float(dados['valor'])
             
-            # Salvando na tabela oficial com acento conforme seu banco
             res = supabase.table("finanças_nuvem").insert(dados).execute()
             
             resp.message(f"✅ Salvo com sucesso no banco!\n💰 Valor: R$ {dados['valor']}\n📂 Categoria: {dados['categoria']}")
