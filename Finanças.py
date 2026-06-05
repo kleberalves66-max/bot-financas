@@ -12,11 +12,11 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://gnmendbdydjbdrsqqkna.supa
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
-# Inicialização com o nome simplificado do modelo para projetos novos
+# Atualizado para o modelo atual e ativo: gemini-2.5-flash
 if GEMINI_API_KEY and SUPABASE_KEY:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 else:
     print("AVISO: Chaves não encontradas nas Variáveis de Ambiente do Render!")
     supabase = None
