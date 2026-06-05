@@ -52,7 +52,7 @@ def webhook():
             dados['valor'] = float(dados['valor'])
             
             # Salvando na tabela oficial com acento
-            res = supabase.table("finanças_nuvem").insert(dados).execute()
+            res = supabase.table("financas_nuvem").insert(dados).execute()
             
             resp.message(f"✅ Salvo com sucesso no banco!\n💰 Valor: R$ {dados['valor']}\n📂 Categoria: {dados['categoria']}")
         
