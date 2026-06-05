@@ -7,16 +7,16 @@ import google.generativeai as genai
 
 app = Flask(__name__)
 
-# Puxando dos Environments ou usando um texto vazio para não quebrar o Python no início
+# Puxando dos Environments do Render
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://gnmendbdydjbdrsqqkna.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
-# Só tenta inicializar se a chave existir, evitando o "status 1"
+# Inicialização com o nome simplificado do modelo para projetos novos
 if GEMINI_API_KEY and SUPABASE_KEY:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('models/gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     print("AVISO: Chaves não encontradas nas Variáveis de Ambiente do Render!")
     supabase = None
@@ -51,6 +51,7 @@ def webhook():
             dados = json.loads(texto_ia)
             dados['valor'] = float(dados['valor'])
             
+            # Salvando na tabela oficial com acento
             res = supabase.table("finanças_nuvem").insert(dados).execute()
             
             resp.message(f"✅ Salvo com sucesso no banco!\n💰 Valor: R$ {dados['valor']}\n📂 Categoria: {dados['categoria']}")
